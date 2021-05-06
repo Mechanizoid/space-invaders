@@ -31,7 +31,7 @@ int disassemble8080(uint8_t *codebuffer, int pc, int len)
 	}
 
 	opbytes += op_extra_bytes[*code];
-	printf("%04x ", pc);
+	printf("%2d  (%04x) - ", pc, pc);
 
 	switch (*code) {
 	case 0x00:
@@ -801,7 +801,6 @@ int disassemble8080(uint8_t *codebuffer, int pc, int len)
 		printf("RST   7");
 		break;
 	}
-	printf("\n");
 
 	return opbytes;
 }
@@ -841,8 +840,10 @@ int main(int argc, char **argv)
 	fread(buf, fsize, 1, fp);
 	fclose(fp);
 
+
 	while (pc < fsize) {
 		pc += disassemble8080(buf, pc, fsize);
+		printf("\n");
 	}
 
 	free(buf);
