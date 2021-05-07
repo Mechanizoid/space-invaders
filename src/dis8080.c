@@ -182,6 +182,7 @@ int disassemble8080(uint8_t *codebuffer, int pc, int len)
 		break;
 	case 0x2f:
 		printf("CMA");
+		break;
 	case 0x30:
 		printf("*NOP");
 		break;
