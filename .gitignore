@@ -1,11 +1,17 @@
-# Ignore the ROM directory
-rom/
+# Directories to ignore
+build-aux/
+roms/
 
 # Ignore emacs autosave files
 *~
 
+# Ignore config.h
+config.h
+
 # Executables
 *.out
+src/invaders
+src/dis8080
 
 # Prerequisites
 *.d
