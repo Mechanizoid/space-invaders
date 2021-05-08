@@ -31,7 +31,7 @@ int disassemble8080(uint8_t *codebuffer, int pc, int len)
 	}
 
 	opbytes += op_extra_bytes[*code];
-	printf("%2d  (%04x) - ", pc, pc);
+	printf("%04x  ", pc);
 
 	switch (*code) {
 	case 0x00:
