@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 /* contains the number of additional bytes in an instruction */
-int op_extra_bytes[256] = {
+const int OPCODE_EXTRA_BYTES[256] = {
 	[0x01] = 2, [0x06] = 1, [0x0e] = 1, [0x11] = 2, [0x16] = 1, [0x1e] = 1,
 	[0x21] = 2, [0x22] = 2, [0x26] = 1, [0x2a] = 2, [0x2e] = 1, [0x31] = 2,
 	[0x32] = 2, [0x36] = 1, [0x3a] = 2, [0x3e] = 1, [0xc2] = 2, [0xc3] = 2,
@@ -24,13 +24,13 @@ int disassemble8080(uint8_t *codebuffer, int pc, int len)
 	uint8_t *code = &codebuffer[pc];
 	int opbytes = 1;
 
-	if (op_extra_bytes[*code] > (len - 1) - pc) {
+	if (OPCODE_EXTRA_BYTES[*code] > (len - 1) - pc) {
 		printf("ERROR: interpreting %02X as an instruction would result"
 		       "in buffer overflow", *code);
 		return 0;
 	}
 
-	opbytes += op_extra_bytes[*code];
+	opbytes += OPCODE_EXTRA_BYTES[*code];
 	printf("%04x  ", pc);
 
 	switch (*code) {

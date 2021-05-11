@@ -1,41 +1,61 @@
 /* Intel 8080 CPU core for Space Invaders emulator */
 
 #include "cpu.h"
-#include "interface.h"
 #include <stdint.h>
 
 /* paramaterized macros, yeeeee */
 #define REG_PAIR(r, p)  ((((uint16_t) (r)) << 8) | ((uint16_t) (p)))
 
 
-struct Flags {
-	uint8_t z : 1;      // Zero flag
-	uint8_t s : 1;      // Sign flag
-	uint8_t p : 1;      // Parity flag
-	uint8_t cy : 1;     // Carry flag
-	uint8_t ac : 1;     // Auxiliary carry flag
-	uint8_t pad : 3;
-};
-
-
-struct ProcessorState {
-	uint8_t accumulator;            
-	uint8_t b;
-	uint8_t c;
-	uint8_t d;
-	uint8_t e;
-	uint8_t h;
-	uint8_t l;
-	uint16_t program_counter;
-	uint16_t stack_pointer;
-	struct Flags flags;
-} state;
+/* function definitions */
+unsigned int parity(uint8_t n);
 
 
 
-void process_instruction(void) {
+void unimplemented_instruction(i8080* const c)
+{
+	c->pc--;
+	printf("Unimplemnted instruction\n");
+	exit(1);
+}
+
+
+uint8_t add(i8080* const c, uint8_t i, uint8_t j, bool cy)
+{
+	uint16_t ans = (uint16_t) i + (uint16_t) j;
+
+	c->flags.z = ((answer & 0xff) == 0);
+	c->flags.s = ((answer & 0x80) != 1);
+	c->flags.p = parity(answer);
+	c->flags.cy = ((answer & 0xff) != 0);
+	
+	
+	
+}
+
+
+
+void execute(i8080* const c)
+{
+	uint8_t opcode = c->read_memory(c->pc);
+	
+	switch(opcode) {
+	case 0x00:  // NOP
+		break;
+	case 0x01: 	
+	
+		
+	}
+}
+
+
+/* Processes one Intel 8080 instruction
+ */
+
+void process_instruction(void)
+{
 	uint8_t instruction = read_memory(state.program_counter);
-	uint16_t pair;
+	uint16_t pair, answer;
 	
 
 	switch(instruction) {
@@ -57,14 +77,29 @@ void process_instruction(void) {
 		state.b = (uint8_t) pair >> 8;
 		state.c = (uint8_t) (pair ^ 0x00FF);
 		break;
-	case 0x04:
+	case 0x04:                // INR B
+		answer = state.b + 1;
 		
+		state.flags.z = ((answer & 0xff) == 0);
+		state.flags.s = ((answer & 0x80) != 0);
+		state.flags.p = get_parity(answer);
+		state.flags.cy = (answer > 0xff);
 		
-			
-		
-		
+		state.a = answer & 0xff;
 	}
 
 	// advance to next opcode
 	state->pc += 1;
+}
+
+/* parity helper function */
+unsigned int parity(uint8_t n)
+{
+	unsigned int parity = 0;
+
+	while(n) {
+		parity = !parity;
+		n = n & (n - 1);
+	}
+	return parity;
 }
