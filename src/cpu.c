@@ -17,27 +17,12 @@ void unimplemented_instruction(i8080* const state)
 }
 
 
-
-void execute(i8080* const c)
-{
-	uint8_t opcode = c->read_memory(c->pc);
-	
-	switch(opcode) {
-	case 0x00:  // NOP
-		break;
-	case 0x01: 	
-	
-		
-	}
-}
-
-
 /* Processes one Intel 8080 instruction
  */
 
-void process_instruction(i8080* const state)
+void execute(i8080* const state)
 {
-	uint8_t instruction = read_memory(state.program_counter);
+	uint8_t instruction = state->read_memory(state->pc);
 	uint16_t pair, answer;
 	
 
