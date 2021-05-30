@@ -30,30 +30,30 @@ void execute(i8080* const state)
 	case 0x00:                // NOP
 		break;
 	case 0x01:                // LXI B, D16
-		state->b = read_memory(state.program_counter + 2);
-		state->c = read_memory(state.program_counter + 1);
+		state->b = read_memory(state->pc + 2);
+		state->c = read_memory(state->pc + 1);
 		state->pc += 2;
 		break;
 	case 0x02:                // STAX B
-	        pair = ((uint16_t) state.b << 8) | (uint16_t) state.c;
-		write_memory(pair, state.a);
+	        pair = ((uint16_t) state->b << 8) | (uint16_t) state->c;
+		write_memory(pair, state->a);
 		state.program_counter++;
 		break;
 	case 0x03:                // INX B
-		pair = ((uint16_t) state.b << 8) | (uint16_t) state.c;
+		pair = ((uint16_t) state->b << 8) | (uint16_t) state->c;
 		pair += 1;
 		state.b = (uint8_t) pair >> 8;
 		state.c = (uint8_t) (pair ^ 0x00FF);
 		break;
 	case 0x04:                // INR B
-		answer = state.b + 1;
+		answer = state->b + 1;
 		
-		state.flags.z = ((answer & 0xff) == 0);
-		state.flags.s = ((answer & 0x80) != 0);
-		state.flags.p = get_parity(answer);
-		state.flags.cy = (answer > 0xff);
+		state->flags.z = ((answer & 0xff) == 0);
+		state->flags.s = ((answer & 0x80) != 0);
+		state->flags.p = get_parity(answer);
+		state->flags.cy = (answer > 0xff);
 		
-		state.a = answer & 0xff;
+		state->a = answer & 0xff;
 		break;
 	case 0x05: unimplemented_instruction(state); break;
 	case 0x06: unimplemented_instruction(state); break;
