@@ -30,13 +30,13 @@ void execute(i8080* const state)
 	case 0x00:                // NOP
 		break;
 	case 0x01:                // LXI B, D16
-		state->b = read_memory(state.program_counter + 2);
-		state->c = read_memory(state.program_counter + 1);
+		state->b = state->read_memory(state.program_counter + 2);
+		state->c = state->read_memory(state.program_counter + 1);
 		state->pc += 2;
 		break;
 	case 0x02:                // STAX B
 	        pair = ((uint16_t) state.b << 8) | (uint16_t) state.c;
-		write_memory(pair, state.a);
+		state->write_memory(pair, state.a);
 		state.program_counter++;
 		break;
 	case 0x03:                // INX B
@@ -226,7 +226,6 @@ void execute(i8080* const state)
 	case 0xad: unimplemented_instruction(state); break;
 	case 0xae: unimplemented_instruction(state); break;
 	case 0xaf: unimplemented_instruction(state); break;
-
 	case 0xb0: unimplemented_instruction(state); break;
 	case 0xb1: unimplemented_instruction(state); break;
 	case 0xb2: unimplemented_instruction(state); break;
