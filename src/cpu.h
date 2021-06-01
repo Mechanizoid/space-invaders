@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
+/* type declarations */
 typedef struct Flags {
 	// Zero, Sign, Parity, Carry, Auxiliary Carry flags
 	uint8_t z:1, s:1, p:1, cy:1, ac:1;
@@ -25,10 +25,12 @@ typedef struct i8080 {
 	uint8_t (*read_memory)(uint16_t address);
 	void (*write_memory)(uint16_t address, uint8_t data);
 	uint8_t (*read_port)(uint8_t port);
-	void (*write_port)(uint8_t port, uint8_t data)
+	void (*write_port)(uint8_t port, uint8_t data);
 } i8080;
 
 
+/* function delarations */
+void execute(i8080* const state);
 
 
 

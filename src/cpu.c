@@ -1,13 +1,17 @@
 /* Intel 8080 CPU core for Space Invaders emulator */
 
 #include "cpu.h"
-#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 
-/* Helper function declarations */
-static unsigned int parity(const uint8_t n);
-
-
+/* function declarations */
+void unimplemented_instruction(i8080* const state);
+static bool parity(const uint8_t n);
+static bool carry(const uint8_t a, const uint8_t b, const bool cy);
+static void set_ZSP(i8080* const s, const uint8_t result);
+static void add(i8080* const state, const uint8_t value, const bool cy);
 
 void unimplemented_instruction(i8080* const state)
 {
@@ -17,43 +21,62 @@ void unimplemented_instruction(i8080* const state)
 }
 
 
+/* Helper functions for math. I have not implemented the auxiliary
+ * carry flag because I have no way to test it yet.
+ */
+
+
+/* sets the carry flag */
+static bool carry(const uint8_t a, const uint8_t b, const bool cy)
+{
+	uint16_t result = a + b + cy;
+	return result > 0xff;
+}
+
+static void set_ZSP(i8080* const s, const uint8_t result)
+{
+	s->flags.z = result == 0;
+	s->flags.s = result >> 7;
+	s->flags.p = parity(result);
+}
+
+/* add(): adds val to the accumlator with option carry flag.
+ */
+static void add(i8080* const state, const uint8_t val, const bool cy)
+{
+	uint8_t result;
+	
+	result = state->a + val + cy;
+	state->flags.cy = carry(state->a, val, cy);
+	set_ZSP(state, result);
+
+	state->a = result;
+}
+
+
 /* Processes one Intel 8080 instruction
  */
 
 void execute(i8080* const state)
 {
 	uint8_t instruction = state->read_memory(state->pc);
-	uint16_t pair, answer;
+	uint16_t pair;
 	
 
 	switch(instruction) {
 	case 0x00:                // NOP
 		break;
 	case 0x01:                // LXI B, D16
-		state->b = read_memory(state->pc + 2);
-		state->c = read_memory(state->pc + 1);
-		state->pc += 2;
+		unimplemented_instruction(state);
 		break;
 	case 0x02:                // STAX B
-	        pair = ((uint16_t) state->b << 8) | (uint16_t) state->c;
-		write_memory(pair, state->a);
-		state.program_counter++;
+		unimplemented_instruction(state);
 		break;
 	case 0x03:                // INX B
-		pair = ((uint16_t) state->b << 8) | (uint16_t) state->c;
-		pair += 1;
-		state.b = (uint8_t) pair >> 8;
-		state.c = (uint8_t) (pair ^ 0x00FF);
+		unimplemented_instruction(state);
 		break;
 	case 0x04:                // INR B
-		answer = state->b + 1;
-		
-		state->flags.z = ((answer & 0xff) == 0);
-		state->flags.s = ((answer & 0x80) != 0);
-		state->flags.p = get_parity(answer);
-		state->flags.cy = (answer > 0xff);
-		
-		state->a = answer & 0xff;
+		unimplemented_instruction(state);
 		break;
 	case 0x05: unimplemented_instruction(state); break;
 	case 0x06: unimplemented_instruction(state); break;
@@ -178,14 +201,33 @@ void execute(i8080* const state)
 	case 0x7d: unimplemented_instruction(state); break;
 	case 0x7e: unimplemented_instruction(state); break;
 	case 0x7f: unimplemented_instruction(state); break;
-	case 0x80: unimplemented_instruction(state); break;
-	case 0x81: unimplemented_instruction(state); break;
-	case 0x82: unimplemented_instruction(state); break;
-	case 0x83: unimplemented_instruction(state); break;
-	case 0x84: unimplemented_instruction(state); break;
-	case 0x85: unimplemented_instruction(state); break;
-	case 0x86: unimplemented_instruction(state); break;
-	case 0x87: unimplemented_instruction(state); break;
+		
+	case 0x80:          // ADD B
+		add(state, state->b, 0);
+		break;
+	case 0x81:          // ADD C
+		add(state, state->c, 0);
+		break;
+	case 0x82:          // ADD D
+		add(state, state->d, 0);
+		break;
+	case 0x83:          // ADD C
+		add(state, state->c, 0);
+		break;
+	case 0x84:          // ADD H
+		add(state, state->h, 0);
+		break;
+	case 0x85:          // ADD L
+		add(state, state->l, 0);
+		break;
+	case 0x86:          // ADD M
+		pair = (state->h << 8) | (state->l);
+		add(state, state->read_memory(pair), 0);		
+		break;
+	case 0x87:          // ADD A
+		add(state, state->a, 0);
+		break;
+		
 	case 0x88: unimplemented_instruction(state); break;
 	case 0x89: unimplemented_instruction(state); break;
 	case 0x8a: unimplemented_instruction(state); break;
@@ -313,9 +355,9 @@ void execute(i8080* const state)
 }
 
 /* parity helper function */
-static unsigned int parity(const uint8_t n)
+static bool parity(uint8_t n)
 {
-	unsigned int parity = 0;
+	bool parity = 0;
 
 	while(n) {
 		parity = !parity;
