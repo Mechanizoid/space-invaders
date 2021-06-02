@@ -13,6 +13,8 @@ static bool carry(const uint8_t a, const uint8_t b, const bool cy);
 static void set_ZSP(i8080* const s, const uint8_t result);
 static void add(i8080* const state, const uint8_t value, const bool cy);
 
+
+
 void unimplemented_instruction(i8080* const state)
 {
 	state->pc--;
@@ -33,6 +35,7 @@ static bool carry(const uint8_t a, const uint8_t b, const bool cy)
 	return result > 0xff;
 }
 
+/* sets the Zero, Sign, and Parity flags */
 static void set_ZSP(i8080* const s, const uint8_t result)
 {
 	s->flags.z = result == 0;
@@ -40,7 +43,7 @@ static void set_ZSP(i8080* const s, const uint8_t result)
 	s->flags.p = parity(result);
 }
 
-/* add(): adds val to the accumlator with option carry flag.
+/* add(): adds val to the accumlator with optional carry flag.
  */
 static void add(i8080* const state, const uint8_t val, const bool cy)
 {
@@ -227,15 +230,31 @@ void execute(i8080* const state)
 	case 0x87:          // ADD A
 		add(state, state->a, 0);
 		break;
-		
-	case 0x88: unimplemented_instruction(state); break;
-	case 0x89: unimplemented_instruction(state); break;
-	case 0x8a: unimplemented_instruction(state); break;
-	case 0x8b: unimplemented_instruction(state); break;
-	case 0x8c: unimplemented_instruction(state); break;
-	case 0x8d: unimplemented_instruction(state); break;
-	case 0x8e: unimplemented_instruction(state); break;
-	case 0x8f: unimplemented_instruction(state); break;
+	case 0x88:          // ADC B
+		add(state, state->b, state->flags.cy);
+		break;
+	case 0x89:          // ADC C
+		add(state, state->c, state->flags.cy);
+		break;
+	case 0x8a:          // ADC D
+		add(state, state->d, state->flags.cy);
+		break;
+	case 0x8b:          // ADC E
+		add(state, state->e, state->flags.cy);
+		break;
+	case 0x8c:          // ADC H
+		add(state, state->h, state->flags.cy);
+		break;
+	case 0x8d:          // ADC L
+		add(state, state->l, state->flags.cy);
+		break;
+	case 0x8e:          // ADC M
+		pair = (state->h << 8) | (state->l);
+		add(state, state->read_memory(pair), state->flags.cy);
+		break;
+	case 0x8f:          // ADC A
+		add(state, state->a, state->flags.cy);
+		break;
 	case 0x90: unimplemented_instruction(state); break;
 	case 0x91: unimplemented_instruction(state); break;
 	case 0x92: unimplemented_instruction(state); break;

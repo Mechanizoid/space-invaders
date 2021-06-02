@@ -7,7 +7,7 @@
 /* type declarations */
 typedef struct Flags {
 	// Zero, Sign, Parity, Carry, Auxiliary Carry flags
-	uint8_t z:1, s:1, p:1, cy:1, ac:1;
+	uint8_t z:1, s:1, p:1, cy:1, ac:1, pad: 3;
 } Flags;
 
 
