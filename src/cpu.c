@@ -43,7 +43,7 @@ static void set_ZSP(i8080* const s, const uint8_t result)
 	s->flags.p = parity(result);
 }
 
-/* add(): adds val to the accumlator with optional carry flag.
+/* add(): adds val to the accumulator with optional carry flag.
  */
 static void add(i8080* const state, const uint8_t val, const bool cy)
 {
@@ -55,6 +55,23 @@ static void add(i8080* const state, const uint8_t val, const bool cy)
 
 	state->a = result;
 }
+
+/* subtracts val from the accumulator. Optionally, the carry bit
+ * can be subtracted as well if 'cy' is set to contain the contents
+ * of the carry flag
+ */
+static void sub(i8080* const state, const uint8_t val, const bool cy)
+{
+	uint8_t result;
+
+	result = state->a - (val + cy);
+
+	state->flags.cy = state->a < val;
+	set_ZSP(state, result);
+
+	state->a = result;
+}
+
 
 
 /* Processes one Intel 8080 instruction
@@ -255,13 +272,28 @@ void execute(i8080* const state)
 	case 0x8f:          // ADC A
 		add(state, state->a, state->flags.cy);
 		break;
-	case 0x90: unimplemented_instruction(state); break;
-	case 0x91: unimplemented_instruction(state); break;
-	case 0x92: unimplemented_instruction(state); break;
-	case 0x93: unimplemented_instruction(state); break;
-	case 0x94: unimplemented_instruction(state); break;
-	case 0x95: unimplemented_instruction(state); break;
-	case 0x96: unimplemented_instruction(state); break;
+	case 0x90:          // SUB B
+		sub(state, state->b, 0);
+		break;
+	case 0x91:          // SUB C
+		sub(state, state->c, 0);
+		break;
+	case 0x92:          // SUB D
+		sub(state, state->d, 0);
+		break;
+	case 0x93:          // SUB E
+		sub(state, state->e, 0);
+		break;
+	case 0x94:          // SUB H
+		sub(state, state->h, 0);
+		break;
+	case 0x95:          // SUB L
+		sub(state, state->l, 0);
+		break;
+	case 0x96:          // SUB M
+		pair = (state->h << 8) | (state->l);
+		sub(state, state->read_memory(pair), 0);
+		break;
 	case 0x97: unimplemented_instruction(state); break;
 	case 0x98: unimplemented_instruction(state); break;
 	case 0x99: unimplemented_instruction(state); break;
