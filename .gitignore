@@ -2,8 +2,10 @@
 build-aux/
 roms/
 
-# Ignore emacs autosave files
+# Ignore emacs autosaves
 *~
+\#*\#
+.\#*
 
 # Ignore config.h
 config.h

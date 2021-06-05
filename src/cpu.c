@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 
-/* function declarations */
+/* Helper function declarations */
 void unimplemented_instruction(i8080* const state);
 static bool parity(const uint8_t n);
 static bool carry(const uint8_t a, const uint8_t b, const bool cy);
@@ -14,18 +14,15 @@ static void set_ZSP(i8080* const s, const uint8_t result);
 static void add(i8080* const state, const uint8_t value, const bool cy);
 
 
+/* Helper function definitions */
 
 void unimplemented_instruction(i8080* const state)
 {
 	state->pc--;
-	printf("Unimplemnted instruction\n");
+	printf("Unimplemented instruction\n");
 	exit(1);
 }
 
-
-/* Helper functions for math. I have not implemented the auxiliary
- * carry flag because I have no way to test it yet.
- */
 
 
 /* sets the carry flag */
@@ -43,7 +40,7 @@ static void set_ZSP(i8080* const s, const uint8_t result)
 	s->flags.p = parity(result);
 }
 
-/* add(): adds val to the accumulator with optional carry flag.
+/* adds val to the accumulator with optional carry flag.
  */
 static void add(i8080* const state, const uint8_t val, const bool cy)
 {
@@ -73,10 +70,11 @@ static void sub(i8080* const state, const uint8_t val, const bool cy)
 }
 
 
-
-/* Processes one Intel 8080 instruction
+/* API function definitions
  */
 
+
+/* Processes one Intel 8080 instruction */
 void execute(i8080* const state)
 {
 	uint8_t instruction = state->read_memory(state->pc);
