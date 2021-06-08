@@ -490,7 +490,4 @@ void execute(i8080* const c)
 	case 0xfe: unimplemented_instruction(c); break;
 	case 0xff: unimplemented_instruction(c); break;
 	}
-
-	// advance to next opcode
-	c->pc += 1;
 }
