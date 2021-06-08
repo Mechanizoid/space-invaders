@@ -18,7 +18,6 @@ static void add(i8080* const c, const uint8_t value, const bool cy);
 
 void unimplemented_instruction(i8080* const c)
 {
-	c->pc--;
 	printf("Unimplemented instruction\n");
 	exit(1);
 }
@@ -33,29 +32,41 @@ static bool carry(const uint8_t a, const uint8_t b, const bool cy)
 }
 
 /* sets the Zero, Sign, and Parity flags */
-static void set_ZSP(i8080* const s, const uint8_t result)
+static void set_ZSP(i8080* const c, const uint8_t result)
 {
-	s->flags.z = result == 0;
-	s->flags.s = result >> 7;
-	s->flags.p = parity(result);
+	c->flags.z = result == 0;
+	c->flags.s = result >> 7;
+	c->flags.p = parity(result);
 }
 
-/* adds val to the accumulator with optional carry flag.
+
+/* parity helper function */
+static bool parity(uint8_t n)
+{
+	bool parity = 0;
+
+	while(n) {
+		parity = !parity;
+		n = n & (n - 1);
+	}
+	return parity;
+}
+
+
+/* adds 
  */
 static void add(i8080* const c, const uint8_t val, const bool cy)
 {
 	uint8_t result;
-	
+
 	result = c->a + val + cy;
 	c->flags.cy = carry(c->a, val, cy);
 	set_ZSP(c, result);
 
-	c->a = result;
+	c->a = result & 0xff;
 }
 
-/* subtracts val from the accumulator. Optionally, the carry bit
- * can be subtracted as well if 'cy' is set to contain the contents
- * of the carry flag
+/* subtracts val from the accumulator, with optional carry
  */
 static void sub(i8080* const c, const uint8_t val, const bool cy)
 {
@@ -70,17 +81,19 @@ static void sub(i8080* const c, const uint8_t val, const bool cy)
 }
 
 
-/* API function definitions
- */
+/*----------------------------------------------------------------------------*/
+/* API function definitions */
 
 
 /* Processes one Intel 8080 instruction */
 void execute(i8080* const c)
 {
-	uint8_t instruction = c->read_memory(c->pc);
+	uint8_t instruction; 
 	uint16_t pair;
 	uint8_t t;
-	
+
+	instruction = c->read_memory(c->pc);
+	c->pc++;
 
 	switch(instruction) {
 	case 0x00:                // NOP
@@ -95,11 +108,11 @@ void execute(i8080* const c)
 		unimplemented_instruction(c);
 		break;
 	case 0x04:                // INR B
-		c->b = c->b + 1;
+		c->b++;
 		set_ZSP(c, c->b);
 		break;
 	case 0x05:
-		c->b = c->b - 1;
+		c->b--;
 		set_ZSP(c, c->b);
 		break;
 	case 0x06: unimplemented_instruction(c); break;
@@ -109,10 +122,10 @@ void execute(i8080* const c)
 	case 0x0a: unimplemented_instruction(c); break;
 	case 0x0b: unimplemented_instruction(c); break;
 	case 0x0c:          // INR C
-		c->c = c->c + 1;
+		c->c++;
 		set_ZSP(c, c->c);
-	case 0x0d:
-		c->c = c->c - 1;
+	case 0x0d:          // DCR C
+		c->c--;
 		set_ZSP(c, c->c);
 		break;
 	case 0x0e: unimplemented_instruction(c); break;
@@ -122,11 +135,11 @@ void execute(i8080* const c)
 	case 0x12: unimplemented_instruction(c); break;
 	case 0x13: unimplemented_instruction(c); break;
 	case 0x14:          // INR D
-		c->d = c->d + 1;
+		c->d++;
 		set_ZSP(c, c->d);
 		break;
 	case 0x15:          // DCR D
-		c->d = c->d - 1;
+		c->d--;
 		set_ZSP(c, c->d);
 		break;
 	case 0x16: unimplemented_instruction(c); break;
@@ -138,11 +151,11 @@ void execute(i8080* const c)
 	case 0x1a: unimplemented_instruction(c); break;
 	case 0x1b: unimplemented_instruction(c); break;
 	case 0x1c:          // INR E
-		c->e = c->e + 1;
+		c->e++;
 		set_ZSP(c, c->e);
 		break;
 	case 0x1d:          // DCR E
-		c->e = c->e - 1;
+		c->e--;
 		set_ZSP(c, c->e);
 		break;
 	case 0x1e: unimplemented_instruction(c); break;
@@ -152,11 +165,11 @@ void execute(i8080* const c)
 	case 0x22: unimplemented_instruction(c); break;
 	case 0x23: unimplemented_instruction(c); break;
 	case 0x24:          // INR H
-		c->h = c->h + 1;
+		c->h++;
 		set_ZSP(c, c->h);
 		break;
 	case 0x25:          // DCR H
-		c->h = c->h - 1;
+		c->h--;
 		set_ZSP(c, c->h);
 		break;
 	case 0x26: unimplemented_instruction(c); break;
@@ -166,11 +179,11 @@ void execute(i8080* const c)
 	case 0x2a: unimplemented_instruction(c); break;
 	case 0x2b: unimplemented_instruction(c); break;
 	case 0x2c:          // INR L
-		c->l = c->l + 1;
+		c->l++;
 		set_ZSP(c, c->l);
 		break;
 	case 0x2d:          // DCR L
-		c->l = c->l - 1;
+		c->l--;
 		set_ZSP(c, c->l);
 	case 0x2e: unimplemented_instruction(c); break;
 	case 0x2f: unimplemented_instruction(c); break;
@@ -274,22 +287,22 @@ void execute(i8080* const c)
 	case 0x7f: unimplemented_instruction(c); break;
 		
 	case 0x80:          // ADD B
-		add(c, c->b, 0);
+		add(c, c->b, false);
 		break;
 	case 0x81:          // ADD C
-		add(c, c->c, 0);
+		add(c, c->c, false);
 		break;
 	case 0x82:          // ADD D
-		add(c, c->d, 0);
+		add(c, c->d, false);
 		break;
 	case 0x83:          // ADD C
-		add(c, c->c, 0);
+		add(c, c->c, false);
 		break;
 	case 0x84:          // ADD H
-		add(c, c->h, 0);
+		add(c, c->h, false);
 		break;
 	case 0x85:          // ADD L
-		add(c, c->l, 0);
+		add(c, c->l, false);
 		break;
 	case 0x86:          // ADD M
 		pair = (c->h << 8) | (c->l);
@@ -327,19 +340,19 @@ void execute(i8080* const c)
 		sub(c, c->b, 0);
 		break;
 	case 0x91:          // SUB C
-		sub(c, c->c, 0);
+		sub(c, c->c, false);
 		break;
 	case 0x92:          // SUB D
-		sub(c, c->d, 0);
+		sub(c, c->d, false);
 		break;
 	case 0x93:          // SUB E
-		sub(c, c->e, 0);
+		sub(c, c->e, false);
 		break;
 	case 0x94:          // SUB H
-		sub(c, c->h, 0);
+		sub(c, c->h, false);
 		break;
 	case 0x95:          // SUB L
-		sub(c, c->l, 0);
+		sub(c, c->l, false);
 		break;
 	case 0x96:          // SUB M
 		pair = (c->h << 8) | (c->l);
@@ -413,7 +426,9 @@ void execute(i8080* const c)
 	case 0xc3: unimplemented_instruction(c); break;
 	case 0xc4: unimplemented_instruction(c); break;
 	case 0xc5: unimplemented_instruction(c); break;
-	case 0xc6: unimplemented_instruction(c); break;
+	case 0xc6:          // ADI D8
+		add(c, c->read_memory(c->pc++), false);
+		break;
 	case 0xc7: unimplemented_instruction(c); break;
 	case 0xc8: unimplemented_instruction(c); break;
 	case 0xc9: unimplemented_instruction(c); break;
@@ -421,7 +436,10 @@ void execute(i8080* const c)
 	case 0xcb: unimplemented_instruction(c); break;
 	case 0xcc: unimplemented_instruction(c); break;
 	case 0xcd: unimplemented_instruction(c); break;
-	case 0xce: unimplemented_instruction(c); break;
+	case 0xce:          // ACI D8
+		t = c->read_memory(c->pc++);
+		add(c, t, c->flags.cy);
+		break;
 	case 0xcf: unimplemented_instruction(c); break;
 	case 0xd0: unimplemented_instruction(c); break;
 	case 0xd1: unimplemented_instruction(c); break;
@@ -475,16 +493,4 @@ void execute(i8080* const c)
 
 	// advance to next opcode
 	c->pc += 1;
-}
-
-/* parity helper function */
-static bool parity(uint8_t n)
-{
-	bool parity = 0;
-
-	while(n) {
-		parity = !parity;
-		n = n & (n - 1);
-	}
-	return parity;
 }
