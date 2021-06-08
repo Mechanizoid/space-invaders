@@ -93,10 +93,10 @@ void execute(i8080* const c)
 	uint8_t t;
 
 	instruction = c->read_memory(c->pc);
-	c->pc++;
 
 	switch(instruction) {
 	case 0x00:                // NOP
+		/* NOP is quite easy to implement */
 		break;
 	case 0x01:                // LXI B, D16
 		unimplemented_instruction(c);
@@ -309,7 +309,7 @@ void execute(i8080* const c)
 		add(c, c->read_memory(pair), 0);		
 		break;
 	case 0x87:          // ADD A
-		add(c, c->a, 0);
+		add(c, c->a, false);
 		break;
 	case 0x88:          // ADC B
 		add(c, c->b, c->flags.cy);
@@ -422,12 +422,20 @@ void execute(i8080* const c)
 	case 0xbf: unimplemented_instruction(c); break;
 	case 0xc0: unimplemented_instruction(c); break;
 	case 0xc1: unimplemented_instruction(c); break;
-	case 0xc2: unimplemented_instruction(c); break;
-	case 0xc3: unimplemented_instruction(c); break;
+	case 0xc2:          // JNZ A16
+		if (0 == c->flags.z)
+			c->pc = ((c->read_memory(c->pc + 2) << 8) | (c->read_memory(c->pc + 1)));
+		else
+			c->pc += 2;
+		break;
+	case 0xc3:          // JMP A16
+		c->pc = ((c->read_memory(c->pc + 2) << 8) | (c->read_memory(c->pc + 1)));
+		break;
 	case 0xc4: unimplemented_instruction(c); break;
 	case 0xc5: unimplemented_instruction(c); break;
 	case 0xc6:          // ADI D8
-		add(c, c->read_memory(c->pc++), false);
+		add(c, c->read_memory(c->pc + 1), false);
+		c->pc++;
 		break;
 	case 0xc7: unimplemented_instruction(c); break;
 	case 0xc8: unimplemented_instruction(c); break;
@@ -437,7 +445,8 @@ void execute(i8080* const c)
 	case 0xcc: unimplemented_instruction(c); break;
 	case 0xcd: unimplemented_instruction(c); break;
 	case 0xce:          // ACI D8
-		t = c->read_memory(c->pc++);
+		t = c->read_memory(c->pc + 1);
+		c->pc++;
 		add(c, t, c->flags.cy);
 		break;
 	case 0xcf: unimplemented_instruction(c); break;
@@ -490,4 +499,7 @@ void execute(i8080* const c)
 	case 0xfe: unimplemented_instruction(c); break;
 	case 0xff: unimplemented_instruction(c); break;
 	}
+
+	/* advance to next opcode */
+	c->pc++;
 }
