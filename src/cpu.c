@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 
-
 /* Helper function declarations */
 void unimplemented_instruction(i8080* const c);
 static bool parity(const uint8_t n);
@@ -21,8 +20,6 @@ void unimplemented_instruction(i8080* const c)
 	printf("Unimplemented instruction\n");
 	exit(1);
 }
-
-
 
 /* sets the carry flag */
 static bool carry(const uint8_t a, const uint8_t b, const bool cy)
@@ -39,7 +36,6 @@ static void set_ZSP(i8080* const c, const uint8_t result)
 	c->flags.p = parity(result);
 }
 
-
 /* parity helper function */
 static bool parity(uint8_t n)
 {
@@ -51,7 +47,6 @@ static bool parity(uint8_t n)
 	}
 	return parity;
 }
-
 
 /* adds 
  */
@@ -80,45 +75,63 @@ static void sub(i8080* const c, const uint8_t val, const bool cy)
 	c->a = result;
 }
 
+/* DAD instruction */
+static void dad(i8080* const c, const uint8_t rh, const uint8_t rl)
+{
+	uint32_t hl = (c->h << 8) | (c->l);
+	uint32_t rp = (c->h << 8) | (c->l);
+	uint32_t result = hl + rp;
+	c->h = (result & 0xff00) >> 8;
+	c->l = result & 0xff;
+	c->flags.cy = ((result & 0xffff0000) > 0);
+}
+
 
 /*----------------------------------------------------------------------------*/
 /* API function definitions */
-
 
 /* Processes one Intel 8080 instruction */
 void execute(i8080* const c)
 {
 	uint8_t instruction; 
-	uint16_t pair;
-	uint8_t t;
+	uint16_t pair, addr;
+	uint8_t t, hi, lo;
 
 	instruction = c->read_memory(c->pc);
-
+	
 	switch(instruction) {
-	case 0x00:                // NOP
+	case 0x00:                                              // NOP
 		/* NOP is quite easy to implement */
 		break;
-	case 0x01:                // LXI B, D16
+	case 0x01:                                              // LXI B, D16
+		c->c = c->read_memory(c->pc + 1);
+		c->b = c->read_memory(c->pc + 2);
+		c->pc += 2;
+		break;
+	case 0x02:                                              // STAX B 
+		pair = (c->b << 8) | (c->c);
+		c->write_memory(pair, c->a);
+		break;
+	case 0x03:                                              // INX B
 		unimplemented_instruction(c);
 		break;
-	case 0x02:                // STAX B
-		unimplemented_instruction(c);
-		break;
-	case 0x03:                // INX B
-		unimplemented_instruction(c);
-		break;
-	case 0x04:                // INR B
+	case 0x04:                                              // INR B
 		c->b++;
 		set_ZSP(c, c->b);
 		break;
-	case 0x05:
+	case 0x05:                                              // DCR B
 		c->b--;
 		set_ZSP(c, c->b);
 		break;
-	case 0x06: unimplemented_instruction(c); break;
+	case 0x06:                                              // MVI B, D8
+		c->b = c->read_memory(c->pc + 1);
+		c->pc++;
+		break;
 	case 0x07: unimplemented_instruction(c); break;
 	case 0x08: unimplemented_instruction(c); break;
-	case 0x09: unimplemented_instruction(c); break;
+	case 0x09:                                              // DAD B
+		dad(c, c->b, c->l);
+		break;
 	case 0x0a: unimplemented_instruction(c); break;
 	case 0x0b: unimplemented_instruction(c); break;
 	case 0x0c:          // INR C
@@ -128,42 +141,72 @@ void execute(i8080* const c)
 		c->c--;
 		set_ZSP(c, c->c);
 		break;
-	case 0x0e: unimplemented_instruction(c); break;
-	case 0x0f: unimplemented_instruction(c); break;
+	case 0x0e:                                              // MVI C, D8
+		c->c = c->read_memory(c->pc + 1);
+		c->pc++;
+		break;
+	case 0x0f:                                              // RRC
+		t = c->a;
+		c->a = ((t & 0x01) << 7) | (t >> 1);
+		c->flags.cy = (t & 0x01);
+		break;
 	case 0x10: unimplemented_instruction(c); break;
-	case 0x11: unimplemented_instruction(c); break;
+	case 0x11:          // LXI D, D16
+		c->e = c->read_memory(c->pc + 1);
+		c->d = c->read_memory(c->pc + 2);
+		c->pc += 2;
+		break;
 	case 0x12: unimplemented_instruction(c); break;
-	case 0x13: unimplemented_instruction(c); break;
-	case 0x14:          // INR D
+	case 0x13:                                              // INX D
+		c->e++;
+		if (0 == c->e) {
+			c->d++;
+		}
+		break;
+	case 0x14:                                              // INR D
 		c->d++;
 		set_ZSP(c, c->d);
 		break;
-	case 0x15:          // DCR D
+	case 0x15:                                              // DCR D
 		c->d--;
 		set_ZSP(c, c->d);
 		break;
 	case 0x16: unimplemented_instruction(c); break;
 	case 0x17: unimplemented_instruction(c); break;
-	case 0x18:          // *NOP
+	case 0x18:                                              // *NOP
 		unimplemented_instruction(c);
 		break;
-	case 0x19: unimplemented_instruction(c); break;
-	case 0x1a: unimplemented_instruction(c); break;
+	case 0x19:                                              // DAD D
+		dad(c, c->d, c->e);
+		break;
+	case 0x1a:                                              // LDAX D
+		pair = ((c->d << 8) | c->e);
+		c->a = c->read_memory(pair);
+		break;
 	case 0x1b: unimplemented_instruction(c); break;
-	case 0x1c:          // INR E
+	case 0x1c:                                              // INR E
 		c->e++;
 		set_ZSP(c, c->e);
 		break;
-	case 0x1d:          // DCR E
+	case 0x1d:                                              // DCR E
 		c->e--;
 		set_ZSP(c, c->e);
 		break;
 	case 0x1e: unimplemented_instruction(c); break;
 	case 0x1f: unimplemented_instruction(c); break;
 	case 0x20: unimplemented_instruction(c); break;
-	case 0x21: unimplemented_instruction(c); break;
+	case 0x21:          // LXI H, D16
+		c->l = c->read_memory(c->pc + 1);
+		c->h = c->read_memory(c->pc + 2);
+		c->pc += 2;
+		break;
 	case 0x22: unimplemented_instruction(c); break;
-	case 0x23: unimplemented_instruction(c); break;
+	case 0x23:                                              // INX H
+		c->l++;
+		if (0 == c->l) {
+			c->h++;
+		}
+		break;
 	case 0x24:          // INR H
 		c->h++;
 		set_ZSP(c, c->h);
@@ -174,8 +217,13 @@ void execute(i8080* const c)
 		break;
 	case 0x26: unimplemented_instruction(c); break;
 	case 0x27: unimplemented_instruction(c); break;
-	case 0x28: unimplemented_instruction(c); break;
-	case 0x29: unimplemented_instruction(c); break;
+	case 0x28:                                              // MVI H, D8
+		c->h = c->read_memory(c->pc + 1);
+		c->pc++;
+		break;
+	case 0x29:                                              // DAD H
+		dad(c, c->h, c->l);
+		break;
 	case 0x2a: unimplemented_instruction(c); break;
 	case 0x2b: unimplemented_instruction(c); break;
 	case 0x2c:          // INR L
@@ -188,8 +236,18 @@ void execute(i8080* const c)
 	case 0x2e: unimplemented_instruction(c); break;
 	case 0x2f: unimplemented_instruction(c); break;
 	case 0x30: unimplemented_instruction(c); break;
-	case 0x31: unimplemented_instruction(c); break;
-	case 0x32: unimplemented_instruction(c); break;
+	case 0x31:          // LXI SP, D16
+		lo = c->read_memory(c->pc + 1);
+		hi = c->read_memory(c->pc + 2);
+		c->sp = (hi << 8) | lo;
+		break;
+	case 0x32:                                              // STA addr
+		lo = c->read_memory(c->pc + 1);
+		hi = c->read_memory(c->pc + 2);
+		addr = (hi << 8) | lo;
+		c->write_memory(addr, c->a);
+		c->pc += 2;
+		break;
 	case 0x33: unimplemented_instruction(c); break;
 	case 0x34:          // INR M
 		pair = (c->h << 8) | (c->l);
@@ -205,11 +263,24 @@ void execute(i8080* const c)
 		set_ZSP(c, t);
 		c->write_memory(pair, t);
 		break;
-	case 0x36: unimplemented_instruction(c); break;
+	case 0x36:                                              // MVI M, D8
+		addr = ((c->h << 8) | (c->l));
+		t = c->read_memory(c->pc + 1);
+		c->write_memory(addr, t);
+		c->pc++;
+		break;
 	case 0x37: unimplemented_instruction(c); break;
-	case 0x38: unimplemented_instruction(c); break;
+	case 0x38:
+		unimplemented_instruction(c);
+		break;
 	case 0x39: unimplemented_instruction(c); break;
-	case 0x3a: unimplemented_instruction(c); break;
+	case 0x3a:                                              // LDA addr
+		lo = c->read_memory(c->pc + 1);
+		hi = c->read_memory(c->pc + 2);
+		addr = ((hi << 8) | lo);
+		c->a = c->read_memory(addr);
+		c->pc += 2;
+		break;
 	case 0x3b: unimplemented_instruction(c); break;
 	case 0x3c:          // INR A
 		c->a = c->a + 1;
@@ -219,14 +290,29 @@ void execute(i8080* const c)
 		c->a = c->a - 1;
 		set_ZSP(c, c->a);
 		break;
-	case 0x3e: unimplemented_instruction(c); break;
+	case 0x3e:                                              // MVI A, D8
+		c->a = c->read_memory(c->pc + 1);
+		c->pc++;
+		break;
 	case 0x3f: unimplemented_instruction(c); break;
-	case 0x40: unimplemented_instruction(c); break;
-	case 0x41: unimplemented_instruction(c); break;
-	case 0x42: unimplemented_instruction(c); break;
-	case 0x43: unimplemented_instruction(c); break;
-	case 0x44: unimplemented_instruction(c); break;
-	case 0x45: unimplemented_instruction(c); break;
+	case 0x40:                                              // MOV B, B
+		c->b = c->b;
+		break;
+	case 0x41:                                              // MOV B, C
+		c->b = c->c;
+		break;
+	case 0x42:                                              // MOV B, D
+		c->b = c->d;
+		break;
+	case 0x43:                                              // MOV B, E
+		c->b = c->e;
+		break;
+	case 0x44:                                              // MOV B, H
+		c->b = c->h;
+		break;
+	case 0x45:                                              // MOV B, L
+		c->b = c->l;
+		break;
 	case 0x46: unimplemented_instruction(c); break;
 	case 0x47: unimplemented_instruction(c); break;
 	case 0x48: unimplemented_instruction(c); break;
@@ -243,7 +329,9 @@ void execute(i8080* const c)
 	case 0x53: unimplemented_instruction(c); break;
 	case 0x54: unimplemented_instruction(c); break;
 	case 0x55: unimplemented_instruction(c); break;
-	case 0x56: unimplemented_instruction(c); break;
+	case 0x56:                                              // MOV D, M
+		unimplemented_instruction(c);
+		break;
 	case 0x57: unimplemented_instruction(c); break;
 	case 0x58: unimplemented_instruction(c); break;
 	case 0x59: unimplemented_instruction(c); break;
