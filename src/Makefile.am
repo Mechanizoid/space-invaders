@@ -1,3 +1,3 @@
 bin_PROGRAMS = invaders dis8080
-invaders_SOURCES = main.c cpu.c
+invaders_SOURCES = main.c cpu.c interface.c
 dis8080_SOURCES = dis8080.c
