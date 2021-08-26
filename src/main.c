@@ -1,50 +1,76 @@
 /* Invaders: An emulator for the original Space Invaders */
 
-#include "cpu.h"
-#include "interface.h"
+#include "i8080.h"
+#include "dis8080.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+
+
+#define MEMORY_SIZE 0x10000
+
+
+uint8_t* initialize_memory(void);
+size_t load_rom(uint8_t * buf, const char* const s);
 
 
 
-
-/* function declarations */
-uint8_t read_memory(uint16_t address);
-void write_memory(uint16_t address, uint8_t data);
-uint8_t read_port(uint8_t port);
-void write_port(uint8_t port, uint8_t memory);
-size_t open_file(char *name, uint8_t **buf);
-void load_ROM(void);
-void dump_memory(uint8_t *b, int n);
-
-
-
-int main(void)
+int main(int argc, char **argv)
 {
-	// set up i8080 state
-	i8080 *cpu;
+	printf("Hello from space invaders!\n");
 
-	cpu = invaders_init();
+	// initialize
+	i8080 cpu;
+
+	cpu.pc = 0;
+	cpu.memory = initialize_memory();
 
 	for ( ; ; ) {
-		execute(cpu);
-	}
-	
+		execute(&cpu);
+	}	
+
 	return 0;
 }
 
-/* dumps n bytes of buffer to screen */
-void dump_memory(uint8_t *b, int n)
-{
-	int i = 0;
 
-	for ( ; i < n ; i++) {
-		if (i % 8 == 0)
-			printf("\n%8.8x: ", i);
-		printf("%2.2X ", b[i]);
+uint8_t* initialize_memory(void)
+{
+	uint8_t *mem = NULL;
+
+	mem = calloc(0x10000, 1);
+	if (mem == NULL) {
+		fprintf(stderr, "Call of calloc failed in load_rom()");
+		exit(EXIT_FAILURE);
 	}
-	printf("\n");
+
+	// load roms into appropriate memory locations
+	load_rom(&mem[0x0000], "./roms/invaders.h");
+	load_rom(&mem[0x0800], "./roms/invaders.g");
+	load_rom(&mem[0x1000], "./roms/invaders.f");
+	load_rom(&mem[0x1800], "./roms/invaders.e");
+
+	return mem;
 }
 
+size_t load_rom(uint8_t * buf, const char* const s)
+{
+	FILE *fp = NULL;
+	int size = 0;
+	size_t bytes_written = 0;
 
+	fp = fopen(s, "rb");
+
+	if (fp == NULL) {
+		fprintf(stderr, "Failed to open %s\n", s);
+		exit(EXIT_FAILURE);
+	}
+
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	
+	bytes_written = fread(buf, size, 1, fp);
+	fclose(fp);
+
+	return bytes_written;
+}
