@@ -35,13 +35,24 @@ void execute(i8080 *state)
 	case 0x11: // LXI D
 		state->d = opcode[2];
 		state->e = opcode[1];
-
 		state->pc +=3;
+		break;
+
+	case 0x21: // LXI H
+		state->h = opcode[2];
+		state->l = opcode[1];
+		state->pc += 3;
 		break;
 		
 	case 0x31: // LXI SP
 		state->sp = (opcode[2] << 8) | opcode[1];
 		state->pc += 3;
+		break; 
+
+	case 0x1a: // LDAX D
+		addr = (state->d << 8) | state->e;
+		state->a = state->memory[addr];
+		state->pc++;
 		break;
 
 		/* branch statements */
