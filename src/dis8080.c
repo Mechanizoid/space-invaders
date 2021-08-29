@@ -1,5 +1,6 @@
 /* disassemble Intel 8080 machine code */
 
+#include "dis8080.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -19,16 +20,10 @@ const int OPCODE_EXTRA_BYTES[256] = {
 
 
 
-int disassemble8080(uint8_t *codebuffer, int pc, int len)
+int disassemble8080(uint8_t *codebuffer, int pc)
 {
 	uint8_t *code = &codebuffer[pc];
 	int opbytes = 1;
-
-	if (OPCODE_EXTRA_BYTES[*code] > (len - 1) - pc) {
-		printf("ERROR: interpreting %02X as an instruction would result"
-		       "in buffer overflow", *code);
-		return 0;
-	}
 
 	opbytes += OPCODE_EXTRA_BYTES[*code];
 	printf("%04x  ", pc);
@@ -804,50 +799,4 @@ int disassemble8080(uint8_t *codebuffer, int pc, int len)
 	}
 
 	return opbytes;
-}
-
-
-int main(int argc, char **argv)
-{
-	int fsize = 0;
-	FILE *fp;
-	uint8_t *buf;
-	int pc = 0;
-	
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s file\n", argv[0]);
-		exit(1);
-	}
-
-	fp = fopen(argv[1], "rb");
-
-	if (fp == NULL) {
-		fprintf(stderr, "ERROR: couldn't open %s\n", argv[1]);
-		exit(1);
-	}
-
-	/* get the size of the file and read it into buffer */
-	fseek(fp, 0L, SEEK_END);
-	fsize = ftell(fp);
-	fseek(fp, 0L, SEEK_SET);
-
-	buf = malloc(fsize);
-
-	if (buf == NULL) {
-		fprintf(stderr, "ERROR: failed to allocate memory for code buffer\n");
-		exit(1);
-	}
-
-	fread(buf, fsize, 1, fp);
-	fclose(fp);
-
-
-	while (pc < fsize) {
-		pc += disassemble8080(buf, pc, fsize);
-		printf("\n");
-	}
-
-	free(buf);
-	
-	return 0;
 }
