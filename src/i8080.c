@@ -21,7 +21,7 @@ void unimplemented_instruction(i8080 *state) {
 void execute(i8080 *state)
 {
 	uint8_t *opcode = &state->memory[state->pc];
-	uint16_t addr;
+	uint16_t addr, pair;
 	
 	switch (*opcode) {
 	
@@ -52,6 +52,21 @@ void execute(i8080 *state)
 	case 0x1a: // LDAX D
 		addr = (state->d << 8) | state->e;
 		state->a = state->memory[addr];
+		state->pc++;
+		break;
+
+	case 0x77: // MOV M, A
+		addr = (state->h << 8) | state->l;
+		state->memory[addr] = state->a;
+		state->pc++;
+		break;
+
+		/* arithmetic group */
+	case 0x23: // INX H
+		pair = (state->h << 8) | state->l;
+		pair += 1;
+		state->h = pair >> 8;
+		state->l = pair & 0x00ff;
 		state->pc++;
 		break;
 
