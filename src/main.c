@@ -11,7 +11,7 @@
 
 uint8_t* initialize_memory(void);
 size_t load_rom(uint8_t * buf, const char* const s);
-
+void step_through(i8080 * const state);
 
 
 int main(int argc, char **argv)
@@ -24,11 +24,29 @@ int main(int argc, char **argv)
 	cpu.pc = 0;
 	cpu.memory = initialize_memory();
 
-	for ( ; ; ) {
-		execute(&cpu);
-	}	
+	step_through(&cpu);
 
 	return 0;
+}
+
+
+void step_through(i8080 * const state)
+{
+	int is_running = 1;
+	char in;
+
+	while(is_running) {
+		disassemble8080(state->memory, state->pc);
+		execute(state);
+
+		while((in = getchar())) {
+			if (in = '\n') {
+				break;
+			} else if (in = 'q') {
+				is_running = 0;
+			}
+		}
+	}
 }
 
 
@@ -74,3 +92,5 @@ size_t load_rom(uint8_t * buf, const char* const s)
 
 	return bytes_written;
 }
+
+

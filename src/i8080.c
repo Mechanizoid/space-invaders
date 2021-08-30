@@ -9,7 +9,9 @@
 /* Reports an unimplemented instruction and gives the disassembly
  */
 void unimplemented_instruction(i8080 *state) {
-	printf("Unimplemented instruction: %2.2X\n", state->memory[state->pc]);
+	printf("\n\n/------------------------------/");
+	printf("\nUnimplemented instruction: %2.2X\n",
+	       state->memory[state->pc]);
 	disassemble8080(state->memory, state->pc);
 	printf("\n");
 	
@@ -18,7 +20,7 @@ void unimplemented_instruction(i8080 *state) {
 
 /* Executes one instruction
  */
-void execute(i8080 *state)
+void execute(i8080 * const state)
 {
 	uint8_t *opcode = &state->memory[state->pc];
 	uint16_t addr, pair;
