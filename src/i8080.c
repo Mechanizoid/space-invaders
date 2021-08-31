@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 
+
 const int OP_EXTRA_BYTES[256] = {
 	[0x01] = 2, [0x06] = 1, [0x0e] = 1, [0x11] = 2, [0x16] = 1, [0x1e] = 1,
 	[0x21] = 2, [0x22] = 2, [0x26] = 1, [0x2a] = 2, [0x2e] = 1, [0x31] = 2,
@@ -63,6 +64,13 @@ int execute(i8080 * const state)
 		break;
 
 		/* arithmetic group */
+	case 0x13: // INX D
+		pair = (state->h << 8) | state->l;
+		pair += 1;
+		state->h = pair >> 8;
+		state->l = pair & 0x00ff;
+		break;
+		
 	case 0x23: // INX H
 		pair = (state->h << 8) | state->l;
 		pair += 1;
