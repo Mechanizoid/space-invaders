@@ -38,13 +38,13 @@ void step_through(i8080 * const state)
 	char in;
 
 	while(is_running) {
+		disassemble8080(state->memory, state->pc);
 		status = execute(state);
 
 		if (status == -1) {
 			unimplemented_instruction(state);
 		}
 		
-		disassemble8080(state->memory, state->pc);
 		state->pc += status;
 
 		while((in = getchar())) {
