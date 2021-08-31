@@ -18,6 +18,6 @@ typedef struct i8080 {
 } i8080;
 
 /* function declarations */
-void execute(i8080 * const state);
+int execute(i8080 * const state);
 
 #endif

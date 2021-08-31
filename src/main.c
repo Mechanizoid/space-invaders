@@ -8,10 +8,11 @@
 
 #define MEMORY_SIZE 0x10000
 
-
+/* function declarations */
 uint8_t* initialize_memory(void);
 size_t load_rom(uint8_t * buf, const char* const s);
 void step_through(i8080 * const state);
+void unimplemented_instruction(i8080 *state);
 
 
 int main(int argc, char **argv)
@@ -33,11 +34,18 @@ int main(int argc, char **argv)
 void step_through(i8080 * const state)
 {
 	int is_running = 1;
+	int status = 0;
 	char in;
 
 	while(is_running) {
+		status = execute(state);
+
+		if (status == -1) {
+			unimplemented_instruction(state);
+		}
+		
 		disassemble8080(state->memory, state->pc);
-		execute(state);
+		state->pc += status;
 
 		while((in = getchar())) {
 			if (in = '\n') {
@@ -94,3 +102,14 @@ size_t load_rom(uint8_t * buf, const char* const s)
 }
 
 
+/* Reports an unimplemented instruction and gives the disassembly
+ */
+void unimplemented_instruction(i8080 *state) {
+	printf("\n************************************************************");
+	printf("\nUnimplemented instruction: %2.2X\n",
+	       state->memory[state->pc]);
+	disassemble8080(state->memory, state->pc);
+	printf("\n");
+	
+	exit(0);
+}
