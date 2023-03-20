@@ -50,10 +50,11 @@ void step_through(i8080 * const state)
 		state->pc += status;
 
 		while((in = getchar())) {
-			if (in = '\n') {
+			if (in == '\n') {
 				break;
-			} else if (in = 'q') {
+			} else if (in == 'q') {
 				is_running = 0;
+				break;
 			}
 		}
 	}
