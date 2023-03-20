@@ -27,6 +27,8 @@ int main(int argc, char **argv)
 
 	step_through(&cpu);
 
+	free(cpu.memory);
+
 	return 0;
 }
 
